@@ -14,10 +14,11 @@ public class Application
         this.parser = new Parser();
         this.scanner = new Scanner(System.in);
 
-        System.out.println("Please input a Isbukun Bunun lexical word");
+        System.out.print("Please input a Isbukun Bunun lexical word: ");
         this.parser.setup(this.scanner.nextLine());
+        this.parser.createSyllableList();
         this.parser.parse();
-        System.out.println("The result is: " + this.parser.getOutput());
+        System.out.println("Prosodic Word: [" + this.parser.getOutput() + "]");
     }
 
     public static void main(String[] args) 

@@ -11,54 +11,97 @@ public class Parser
     //Global Variables
     private String input;
     private String output = "";
+    private List<String> syllableList = new ArrayList<>();
 
-    private List<String> syllables;
+    private StringBuilder reproduction;
     
     public void setup(String input)
     {
-        this.input = input + "-()";
-        this.syllables = new ArrayList<>(){};
-        
-        char[] vowelArray = {'i', 'y', 'ɨ', 'ʉ', 'ɯ', 'u', 'ɪ', 'ʏ', 'ʊ', 'e', 'ø', 'ɘ', 'ɵ', 'ɤ', 'o', 'ə', 'ɛ', 'œ', 'ɜ', 'ɞ', 'ʌ', 'ɔ', 'ɐ', 'æ', 'a', 'ɶ', 'ɑ', 'ɒ'};
-       
-        for (char vowel : vowelArray)
-            IPA_VOWELS.add(vowel);
+        this.input = input;
+        System.out.println("Lexical Word: /" + input + "/");
+        this.reproduction = new StringBuilder();
+        IPA_VOWELS.add('i');
+        IPA_VOWELS.add('a');
+        IPA_VOWELS.add('u');
+    }
 
+    public void createSyllableList()
+    {
+        StringBuilder currentSyllableBuilder = new StringBuilder();
 
-        StringBuilder syllable = new StringBuilder();
-
-        for (int index = 0; index < this.input.length(); index++)
+        for (int charIndex = 0; charIndex < this.input.length(); charIndex++)
         {
-            if (IPA_VOWELS.contains(this.input.charAt(index)))
+            if (IPA_VOWELS.contains(this.input.charAt(charIndex)))
             {
-                if (this.input.charAt(index - 1) == 'j')
-                    syllable.append(this.input.charAt(index - 2));
+                //Vowel
+                currentSyllableBuilder.append(this.input.charAt(charIndex));
+
+                //Onset
+                //Consonant-Glide-Vowel-
+                if (charIndex - 2 >= 0 && charIndex + 1 < this.input.length() && this.isGlide(this.input.charAt(charIndex - 1)))
+                    currentSyllableBuilder.insert(0, this.input.charAt(charIndex - 1)).insert(0, this.input.charAt(charIndex - 2));
                 
-                syllable.append(this.input.charAt(index - 1)).append(this.input.charAt(index));
+                //t-ɕ-Glide-Vowel-
+                if (charIndex - 3 >= 0 && this.input.charAt(charIndex - 3) == 't' && this.input.charAt(charIndex - 2) == 'ɕ')
+                    currentSyllableBuilder.insert(0, this.input.charAt(charIndex - 3));
+                
+                //Consonant-Vowel-
+                if (charIndex - 1 >= 0 && (!this.isGlide(this.input.charAt(charIndex - 1))) && !(this.input.charAt(charIndex - 1) == 'ɕ'))
+                    currentSyllableBuilder.insert(0, this.input.charAt(charIndex - 1));
+                
+                //t-ɕ-Vowel-
+                if (charIndex - 2 >= 0 && this.input.charAt(charIndex - 2) == 't' && this.input.charAt(charIndex - 1) == 'ɕ')
+                    currentSyllableBuilder.insert(0, this.input.charAt(charIndex - 1)).insert(0, this.input.charAt(charIndex - 2));
+                
+                //Coda
+                //-Vowel-Glide
+                //-Vowel-Consonant
+                if (charIndex + 1 < this.input.length() && (this.isGlide(this.input.charAt(charIndex + 1)) || this.isCoalescence(this.input.charAt(charIndex + 1))) || 
+                    charIndex + 1 == this.input.length() - 1 ||
+                    (charIndex + 2 < this.input.length()) && (!this.isGlide(this.input.charAt(charIndex + 2)) && !IPA_VOWELS.contains(this.input.charAt(charIndex + 2))))
+                    currentSyllableBuilder.append(this.input.charAt(charIndex + 1));
+                
 
-                if (this.input.charAt(index + 1) == ':' || (!IPA_VOWELS.contains(this.input.charAt(index + 2)) && this.input.charAt(index + 1) != '-'))
-                    syllable.append(this.input.charAt(index + 1));
-
-                if ((this.input.charAt(index + 1) == 'j' || this.input.charAt(index + 1) == 'w') && this.input.charAt(index + 2) != '-')
-                    syllable.append(this.input.charAt(index + 2));
-
-                this.syllables.add(syllable.toString());
-                System.out.println(syllable);
-                syllable.setLength(0);
+                this.syllableList.add(currentSyllableBuilder.toString());
+                currentSyllableBuilder.setLength(0);
             }
-
-            if (this.input.charAt(index) == '-' && this.input.charAt(index + 1) == '(')
-                break;
         }
     }
 
     public void parse()
     {
+        this.reproduction.append("-('");
+
+        int lastSyllableIndex = this.syllableList.size() - 1;
         
+        //L(H)
+        if (this.isHeavySyllable(this.syllableList.get(lastSyllableIndex)))
+            this.reproduction.append(this.syllableList.get(lastSyllableIndex));
+        
+        //(LL) or (HL)
+        if (!this.isHeavySyllable(this.syllableList.get(lastSyllableIndex)))
+            this.reproduction.append(this.syllableList.get(lastSyllableIndex - 1)).append(this.syllableList.get(lastSyllableIndex));
+
+        this.output = this.reproduction.insert(0, this.input).append(")").toString();
     }
 
     public String getOutput()
     {
         return this.output;
+    }
+
+    private boolean isGlide(char c)
+    {
+        return c == 'w' || c == 'j';
+    }
+
+    private boolean isCoalescence(char c)
+    {
+        return c == ':';
+    }
+
+    private boolean isHeavySyllable(String s)
+    {
+        return s.contains("j") || s.contains("w") || s.contains(":");
     }
 }
