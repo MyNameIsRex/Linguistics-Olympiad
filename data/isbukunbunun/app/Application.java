@@ -18,7 +18,7 @@ public class Application
         this.parser.setup(this.scanner.nextLine());
         this.parser.createSyllableList();
         this.parser.parse();
-        System.out.println("Prosodic Word: [" + this.parser.getOutput() + "]");
+        System.out.println("Prosodic Word: [" + this.parser.output + "]");
     }
 
     public static void main(String[] args) 

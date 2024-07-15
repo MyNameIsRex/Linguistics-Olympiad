@@ -10,7 +10,7 @@ public class Parser
     
     //Global Variables
     private String input;
-    private String output = "";
+    public String output = "";
     private List<String> syllableList = new ArrayList<>();
 
     private StringBuilder reproduction;
@@ -33,12 +33,14 @@ public class Parser
         {
             if (IPA_VOWELS.contains(this.input.charAt(charIndex)))
             {
-                //Vowel
+                //[Vowel]
                 currentSyllableBuilder.append(this.input.charAt(charIndex));
 
-                //Onset
+                //[Onset]
                 //Consonant-Glide-Vowel-
-                if (charIndex - 2 >= 0 && charIndex + 1 < this.input.length() && this.isGlide(this.input.charAt(charIndex - 1)))
+                //t-ɕ-Vowel-
+                if (charIndex - 2 >= 0 && (charIndex + 1 < this.input.length() && this.isHeavyCharacter(this.input.charAt(charIndex - 1)) ||
+                    (this.input.charAt(charIndex - 2) == 't' && this.input.charAt(charIndex - 1) == 'ɕ')))
                     currentSyllableBuilder.insert(0, this.input.charAt(charIndex - 1)).insert(0, this.input.charAt(charIndex - 2));
                 
                 //t-ɕ-Glide-Vowel-
@@ -46,22 +48,17 @@ public class Parser
                     currentSyllableBuilder.insert(0, this.input.charAt(charIndex - 3));
                 
                 //Consonant-Vowel-
-                if (charIndex - 1 >= 0 && (!this.isGlide(this.input.charAt(charIndex - 1))) && !(this.input.charAt(charIndex - 1) == 'ɕ'))
+                if (charIndex - 1 >= 0 && (!this.isHeavyCharacter(this.input.charAt(charIndex - 1))) && !(this.input.charAt(charIndex - 1) == 'ɕ'))
                     currentSyllableBuilder.insert(0, this.input.charAt(charIndex - 1));
                 
-                //t-ɕ-Vowel-
-                if (charIndex - 2 >= 0 && this.input.charAt(charIndex - 2) == 't' && this.input.charAt(charIndex - 1) == 'ɕ')
-                    currentSyllableBuilder.insert(0, this.input.charAt(charIndex - 1)).insert(0, this.input.charAt(charIndex - 2));
-                
-                //Coda
+                //[Coda]
                 //-Vowel-Glide
                 //-Vowel-Consonant
-                if (charIndex + 1 < this.input.length() && (this.isGlide(this.input.charAt(charIndex + 1)) || this.isCoalescence(this.input.charAt(charIndex + 1))) || 
+                if (charIndex + 1 < this.input.length() && (this.isHeavyCharacter(this.input.charAt(charIndex + 1))) || 
                     charIndex + 1 == this.input.length() - 1 ||
-                    (charIndex + 2 < this.input.length()) && (!this.isGlide(this.input.charAt(charIndex + 2)) && !IPA_VOWELS.contains(this.input.charAt(charIndex + 2))))
+                    (charIndex + 2 < this.input.length()) && (!this.isHeavyCharacter(this.input.charAt(charIndex + 2)) && !IPA_VOWELS.contains(this.input.charAt(charIndex + 2))))
                     currentSyllableBuilder.append(this.input.charAt(charIndex + 1));
                 
-
                 this.syllableList.add(currentSyllableBuilder.toString());
                 currentSyllableBuilder.setLength(0);
             }
@@ -85,19 +82,9 @@ public class Parser
         this.output = this.reproduction.insert(0, this.input).append(")").toString();
     }
 
-    public String getOutput()
+    private boolean isHeavyCharacter(char c)
     {
-        return this.output;
-    }
-
-    private boolean isGlide(char c)
-    {
-        return c == 'w' || c == 'j';
-    }
-
-    private boolean isCoalescence(char c)
-    {
-        return c == ':';
+        return c == 'w' || c == 'j' || c == ':';
     }
 
     private boolean isHeavySyllable(String s)
